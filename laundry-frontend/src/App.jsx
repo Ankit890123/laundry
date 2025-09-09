@@ -1,8 +1,9 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Provider, useSelector } from "react-redux";
-import { useEffect, Suspense, lazy } from "react";
+import { useEffect, Suspense, lazy, useState } from "react";
 import store from "./store/store";
+import api from "./api";   // 👈 Flask API import
 
 // Components
 import Navbar from "./components/Navbar";
@@ -35,8 +36,14 @@ function NotFound() {
 // Layout wrapper (theme + navbar)
 function Layout({ children }) {
   const theme = useSelector((state) => state.theme.mode || "light");
+  const [backendStatus, setBackendStatus] = useState("");
 
   useEffect(() => {
+    // 👇 Flask backend ko ping karo
+    api.get("/hello")
+      .then((res) => setBackendStatus(res.data.message))
+      .catch(() => setBackendStatus("Backend not reachable"));
+
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
@@ -47,6 +54,10 @@ function Layout({ children }) {
   return (
     <div className="pt-20 min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Navbar />
+      {/* Backend connection status */}
+      <div className="text-center text-sm text-gray-500 py-2">
+        {backendStatus ? `Backend: ${backendStatus}` : "Checking backend..."}
+      </div>
       {children}
     </div>
   );
